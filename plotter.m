@@ -189,7 +189,7 @@ function plot_data(myFig)
         
         r = compute_r(tcCell,tcModel);
         
-        if r^2 < 0.4
+        if r^2 < 0
             continue
         end
         
@@ -299,6 +299,13 @@ function x = get_data(allData,key)
             cResponse = currentData.spikeCount(3,:);
             lambda = 1;
             x = type2_regression(cResponse,acResponse,lambda);
+            
+            
+        case 'MSEOverVariance'
+            MSE = mean( (strip_uc(cellData.spikeCount) - strip_uc(modelData.spikeCount)).^2);
+            variance = var(strip_uc(cellData.spikeCount));
+            
+            x = MSE/variance;
 
             
         case 'LowContrastFanoFactor'
@@ -367,7 +374,7 @@ function x = get_data(allData,key)
             acCount = currentData.bgnSpikeCount(1,:);
             cCount =  currentData.bgnSpikeCount(3,:);
             
-            [~,x] = regression2(acCount,cCount);
+            [~,x] = type2_regression(cCount,acCount,1);
             
 
             
@@ -584,10 +591,19 @@ function set_axis_props(myFig)
     ytype = figData.ydata;
     
     yCellOrModel = figData.yCellOrModel;
-            
-    xlab = get_label(xtype,xCellOrModel);
     
-    ylab = get_label(ytype,yCellOrModel);
+    try
+        xlab = get_label(xtype,xCellOrModel);            
+    catch
+        xlab = '';
+    end
+    
+    try 
+        ylab = get_label(ytype,xCellOrModel);
+    catch
+        ylab = '';
+    end
+        
     
     ax = get_axis(myFig);
     
@@ -613,8 +629,8 @@ end
 
 function label = get_label(type,cellOrModel)
 
-    expt = {'LowContrast','HighContrast','Twopass','DDI','LoHi','Mean','Proportion','Anticorrelated','Correlated','Gaussian'};
-    exptMatch = {'Low contrast','High contrast','Two-pass','DDI','Low-High contrast','Mean','Proportion','Anticorrelated','Correlated','Gaussian'};
+    expt = {'LowContrast','HighContrast','Twopass','DDI','LoHi','Mean','Proportion','Anticorrelated','Correlated','Gaussian','MSEOverVariance'};
+    exptMatch = {'Low contrast','High contrast','Two-pass','DDI','Low-High contrast','Mean','Proportion','Anticorrelated','Correlated','Gaussian','MSE/Variance'};
     
     prop = {'TCSlope','TCR','FanoFactor','SCFFSlope','SCFFr','Variance','SpikeCount','Slope','R','BrennyFactor','SCBF'};
     propMatch = {'TC slope','TC r','FF','SC-FF slope','SC-FF r','Variance','spike count','slope','r','Brenny Factor','SC-BF'};
@@ -744,8 +760,10 @@ function allMenus = generate_menus()
             subMenus2(k).MenuAnticorrelatedTCSlope = uimenu(menus{k},'Label','Anticorrelated TC slope','Checked','off','separator','off','Callback',{@populate_plot,'AnticorrelatedTCSlope',callbackArgs{k}});
             
             subMenus2(k).MenuTCR = uimenu(menus{k},'Label','TC r (all)','Checked','off','separator','on','Callback',{@populate_plot,'TCR',callbackArgs{k}});
-            subMenus2(k).MenuCorrelatedTCR = uimenu(menus{k},'Label','Correlated TC r','Checked','off','separator','off','Callback',{@populate_plot,'CorrleatedTCR',callbackArgs{k}});
+            subMenus2(k).MenuCorrelatedTCR = uimenu(menus{k},'Label','Correlated TC r','Checked','off','separator','off','Callback',{@populate_plot,'CorrelatedTCR',callbackArgs{k}});
             subMenus2(k).MenuAnticorrelatedTCR = uimenu(menus{k},'Label','Anticorrelated TC r','Checked','off','separator','off','Callback',{@populate_plot,'AnticorrelatedTCR',callbackArgs{k}});
+            
+            subMenus2(k).MenuMSEOverVariance = uimenu(menus{k},'Label','MSE/Variance','checked','off','separator','on','callback',{@populate_plot,'MSEOverVariance',callbackArgs{k}});
             
         end
     end
